@@ -1,5 +1,7 @@
+
 import pywifi
 import time
+import math
 from termcolor import colored
 from pyfiglet import figlet_format
 
@@ -17,6 +19,14 @@ def get_manufacturer(bssid):
     mac_prefix = ':'.join(bssid.split(':')[:3]).upper()  # Convertir a mayúsculas
     return mac_vendors.get(mac_prefix, 'Desconocido')
 
+# Calcular la distancia en metros a partir de la señal (dBm)
+def calculate_distance(signal, frequency):
+    # Convertir la frecuencia a MHz
+    frequency_mhz = frequency / 1000.0  # La frecuencia se proporciona en kHz
+    # Aplicar la fórmula
+    distance = 10 ** ((27.55 - (20 * math.log10(frequency_mhz)) + abs(signal)) / 20)
+    return distance
+
 # Inicializa el escáner WiFi
 def scan_wifi():
     wifi = pywifi.PyWiFi()
@@ -33,14 +43,17 @@ def scan_wifi():
         ssid = network.ssid  # Nombre de la red (SSID)
         signal = network.signal  # Intensidad de la señal
         bssid = network.bssid  # Dirección MAC del punto de acceso
-        channel = network.freq  # Canal en el que opera la red
+        frequency = network.freq  # Canal en el que opera la red
         
         # Obtener el fabricante
         manufacturer = get_manufacturer(bssid)
+        
+        # Calcular la distancia
+        distance = calculate_distance(signal, frequency)
 
         print(f"SSID: {colored(ssid, 'cyan')}, Señal: {colored(signal, 'yellow')} dBm, "
-              f"BSSID: {colored(bssid, 'magenta')}, Canal: {colored(channel, 'blue')}, "
-              f"Fabricante: {colored(manufacturer, 'white')}")
+              f"BSSID: {colored(bssid, 'magenta')}, Canal: {colored(frequency, 'blue')} MHz, "
+              f"Fabricante: {colored(manufacturer, 'white')}, Distancia: {colored(round(distance, 2), 'red')} metros")
         print("-" * 50)
 
 if __name__ == "__main__":
